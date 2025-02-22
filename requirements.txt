@@ -2,3 +2,4 @@ openpyxl
 streamlit
 matplotlib
 seaborn
+plotly
