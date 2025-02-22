@@ -32,25 +32,6 @@ st.markdown(
             background-color: #1e1e1e;
             color: white;
         }
-        /* Light mode styles */
-        [data-theme="light"] {
-            background-color: #f5f5f5;
-            color: #000000;
-        }
-        [data-theme="light"] .stButton>button {
-            background-color: #0078D7;
-            color: white;
-        }
-        [data-theme="light"] .stButton>button:hover {
-            background-color: #005a9e;
-        }
-        [data-theme="light"] .stRadio>label, [data-theme="light"] .stCheckbox>label {
-            color: #000000;
-        }
-        [data-theme="light"] .stDataFrame, [data-theme="light"] .stTable {
-            background-color: #ffffff;
-            color: #000000;
-        }
         /* Enhanced visualization styling */
         .stPlotlyChart, .stPyplot {
             border-radius: 10px;
@@ -70,15 +51,6 @@ st.markdown(
 with st.sidebar:
     st.title("⚙️ Settings")
     
-    # Theme toggle
-    theme = st.radio("Select Theme", ["Dark", "Light"], key="theme_toggle")
-    if theme == "Light":
-        st.session_state.theme = "light"
-    else:
-        st.session_state.theme = "dark"
-    
-    st.markdown("---")
-    
     # Visualization options
     st.write("**📊 Visualization Options**")
     visualization_type = st.selectbox("Choose Visualization Type", ["Bar Chart", "Line Chart", "Scatter Plot", "Histogram", "Pie Chart", "Box Plot", "Heatmap"])
@@ -91,8 +63,8 @@ with st.sidebar:
     show_missing_values = st.checkbox("Show Missing Values Analysis")
     show_outliers = st.checkbox("Show Outliers Analysis")
 
-# Apply the selected theme
-st.markdown(f'<div data-theme="{st.session_state.theme}">', unsafe_allow_html=True)
+# Apply the dark theme
+st.markdown('<div data-theme="dark">', unsafe_allow_html=True)
 
 # Main app title and introductory text
 st.title("Advanced Data Sweeper")
