@@ -9,11 +9,11 @@ from io import BytesIO
 import time
 
 
-# Configure Gemini AI
+# Configure
 genai.configure(api_key="AIzaSyCCluJNc2QylAYOrEr4JyGmlhE9CaS1lgk")
 model = genai.GenerativeModel("gemini-pro")
 
-# Function to chat with Gemini AI
+# Function to chat 
 def chat_with_gemini(prompt):
     response = model.generate_content(prompt)
     return response.text
