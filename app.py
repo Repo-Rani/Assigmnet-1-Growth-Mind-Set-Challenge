@@ -1,309 +1,568 @@
 import streamlit as st
-import pandas as pd
+import google.generativeai as genai
+from dotenv import load_dotenv, find_dotenv
 import os
+import datetime
+import random
+import pandas as pd
 from io import BytesIO
-import plotly.express as px
+import time
 
-# Configure the Streamlit app's appearance and layout
-st.set_page_config(page_title="Growth Mindset DataForge Pro", layout="wide")
 
-# Custom CSS for styling the app with dark mode aesthetics
-st.markdown(
-    """
-    <style>
-        /* Dark mode styles */
-        [data-theme="dark"] {
-            background-color: #121212;
-            color: white;
-        }
-        [data-theme="dark"] .stButton>button {
-            background-color: #0078D7;
-            color: white;
-        }
-        [data-theme="dark"] .stButton>button:hover {
-            background-color: #005a9e;
-        }
-        [data-theme="dark"] .stRadio>label, [data-theme="dark"] .stCheckbox>label {
-            color: white;
-        }
-        [data-theme="dark"] .stDataFrame, [data-theme="dark"] .stTable {
-            background-color: #1e1e1e;
-            color: white;
-        }
-        /* Enhanced visualization styling */
-        .stPlotlyChart, .stPyplot {
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-            padding: 1rem;
-            background-color: transparent;
-        }
-        .stPlotlyChart {
-            background-color: transparent;
-        }
-        /* Sidebar styling */
-        .sidebar .sidebar-content {
-            padding: 2rem 1rem;
-        }
-        .sidebar .sidebar-content .stMarkdown h1 {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-        }
-        .sidebar .sidebar-content .stMarkdown h2 {
-            font-size: 1.2rem;
-            margin-top: 1.5rem;
-            margin-bottom: 0.5rem;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+# Configure Gemini AI
+genai.configure(api_key="AIzaSyCCluJNc2QylAYOrEr4JyGmlhE9CaS1lgk")
+model = genai.GenerativeModel("gemini-pro")
 
-# Sidebar for navigation and theme toggle
-with st.sidebar:
-    st.title("⚙️ Settings")
-    
-    # Visualization options
-    st.markdown("### 📊 Visualization Options")
-    visualization_type = st.selectbox(
-        "Choose Visualization Type", 
-        ["Bar Chart", "Line Chart", "Scatter Plot", "Histogram", "Pie Chart", "Box Plot", "Heatmap"]
+# Function to chat with Gemini AI
+def chat_with_gemini(prompt):
+    response = model.generate_content(prompt)
+    return response.text
+
+# Motivational Quotes Function
+def get_motivation():
+    motivations = [
+        "Believe you can and you're halfway there. - Theodore Roosevelt",
+        "The only limit to our realization of tomorrow is our doubts of today. - Franklin D. Roosevelt",
+        "It always seems impossible until it's done. - Nelson Mandela",
+        "Success is not final, failure is not fatal: It is the courage to continue that counts. - Winston Churchill",
+        "The only way to do great work is to love what you do. - Steve Jobs"
+    ]
+    return random.choice(motivations)
+
+# Task Manager App
+def task_manager_app():
+    st.title("✅ Task Manager")
+    st.write("Organize your tasks and stay productive! 🚀")
+
+    task = st.text_input("📝 Add a new task:")
+    priority = st.selectbox("🔝 Priority", ["High", "Medium", "Low"])
+    due_date = st.date_input("📅 Due Date", datetime.date.today())
+    category = st.selectbox("📂 Category", ["Work", "Personal", "Study", "Other"])
+
+    if st.button("Add Task"):
+        if task:
+            if 'tasks' not in st.session_state:
+                st.session_state.tasks = []
+            st.session_state.tasks.append({
+                "task": task,
+                "priority": priority,
+                "due_date": due_date,
+                "category": category,
+                "completed": False
+            })
+            st.success("Task added successfully!  ")
+        else:
+            st.warning("Please enter a task!")
+
+    if 'tasks' in st.session_state and st.session_state.tasks:
+        st.subheader("📋 Your Tasks:")
+        for i, task in enumerate(st.session_state.tasks, 1):
+            st.write(f"{i}. {task['task']} - Priority: {task['priority']} - Due: {task['due_date']} - Category: {task['category']}")
+            if st.button(f"Complete Task {i}"):
+                st.session_state.tasks[i-1]['completed'] = True
+                st.success("Task marked as completed! 🎉")
+            if st.button(f"Delete Task {i}"):
+                st.session_state.tasks.pop(i-1)
+                st.success("Task deleted successfully! 🗑")
+    else:
+        st.info("No tasks added yet. Add some tasks to get started! 🌟")
+
+# Growth Mindset App
+def growth_mindset_app():
+    st.title("🌱 Growth Mindset Challenge")
+
+    st.header("Welcome to the Growth Mindset Challenge!  ")
+    st.write(
+        "A growth mindset is the belief that abilities can be developed through dedication and hard work. "
+        "This web app is designed to help you track your progress, stay motivated, and cultivate a positive learning attitude. "
+        "Remember, every challenge is an opportunity for growth! 🌟"
     )
-    
-    # Additional sidebar options
-    st.markdown("---")
-    st.markdown("### 🔧 Additional Options")
-    show_summary = st.checkbox("📝 Show Data Summary")
-    show_correlation = st.checkbox("📈 Show Correlation Matrix")
-    show_missing_values = st.checkbox("🔍 Show Missing Values Analysis")
-    show_outliers = st.checkbox("📊 Show Outliers Analysis")
 
-# Apply the dark theme
-st.markdown('<div data-theme="dark">', unsafe_allow_html=True)
+    st.subheader("📅 Daily Reflection")
+    date = st.date_input("Select Date", datetime.date.today())
+    reflection = st.text_area("📝 What did you learn today?")
+    challenges = st.text_area("💡 What challenges did you face, and how did you overcome them?")
+    next_goal = st.text_area("🎯 What is your next goal for improvement?")
 
-# Main app title and introductory text
-st.title("🚀 Growth Mindset DataForge Pro")
-st.write("**Empower your learning journey with data and a growth mindset.**")
+    if st.button("✅ Submit Reflection"):
+        st.success("Reflection Saved! Keep Growing! 🚀")
 
-# Growth Mindset Section
-st.subheader("🌱 What is a Growth Mindset?")
-st.write("""
-A growth mindset is the belief that your abilities and intelligence can be developed through hard work, perseverance, and learning from your mistakes. Here are some tips to help you adopt a growth mindset:
-- **Embrace Challenges**: View obstacles as opportunities to learn.
-- **Learn from Mistakes**: Understand that making mistakes is a natural part of learning.
-- **Persist Through Difficulties**: Stay determined, even when things get tough.
-- **Celebrate Effort**: Recognize and reward the effort you put into learning.
-""")
+    st.header("💡 Growth Mindset Tips")
+    st.write("✔ Embrace challenges as learning opportunities. 💪")
+    st.write("✔ Learn from mistakes instead of fearing them. 🔄")
+    st.write("✔ Celebrate effort and progress over perfection. 🎉")
+    st.write("✔ Stay positive and keep pushing forward! 😊")
+    st.write("✔ Seek feedback and use it as a tool for improvement. 🔧")
+    st.write("✔ Visualize success and take small steps toward your goals. 🌈")
+    st.write("✔ Surround yourself with positive and supportive people. 🤝")
+    st.write("✔ Practice gratitude to stay motivated and focused. 🙏")
 
-# Initialize session state for reflections and goals
-if "reflections" not in st.session_state:
-    st.session_state.reflections = []
+    if st.button("💖 Get Inspired"):
+        st.success(get_motivation())
 
-if "goals" not in st.session_state:
-    st.session_state.goals = []
+    st.header("📌 Track Your Progress")
+    st.write("🗂 Keep a journal of your reflections and review your progress over time!")
+    st.write("📊 Set weekly or monthly growth goals to measure your improvement.")
+    st.write("🔄 Stay consistent and celebrate small wins!")
 
-# Reflection Journal
-st.subheader("📝 Reflection Journal")
-reflection = st.text_area("Write about a challenge you faced, what you learned, and how you plan to improve:")
-if st.button("Save Reflection"):
-    if reflection:
-        st.session_state.reflections.append(reflection)
-        st.success("Reflection saved! Keep up the great work.")
+    progress = st.slider("📈 How motivated do you feel today?", 0, 100, 50)
+    if progress >= 75:
+        st.success("🔥 Amazing! Keep up the great work!")
+    elif progress >= 50:
+        st.info("💪 You're doing great! Keep pushing forward!")
     else:
-        st.warning("Please write something before saving.")
+        st.warning("🌟 Keep going! Every small effort matters!")
 
-# Display saved reflections
-if st.session_state.reflections:
-    st.subheader("📝 Saved Reflections")
-    for i, reflection in enumerate(st.session_state.reflections, 1):
-        st.write(f"{i}. {reflection}")
+    st.header("🎯 Weekly Goal Setting")
+    weekly_goal = st.text_area("What is your goal for this week?")
+    if st.button("Set Weekly Goal"):
+        st.success("Weekly goal set! Let's achieve it together! 🚀")
 
-# Progress Tracker
-st.subheader("📊 Progress Tracker")
-tasks_completed = st.slider("Number of tasks completed:", 0, 10)
-reflections_written = st.slider("Number of reflections written:", 0, 10)
-st.write(f"**Tasks Completed:** {tasks_completed}")
-st.write(f"**Reflections Written:** {reflections_written}")
+    st.header("📅 Monthly Reflection")
+    monthly_reflection = st.text_area("Reflect on your progress this month. What went well? What could be improved?")
+    if st.button("Submit Monthly Reflection"):
+        st.success("Monthly reflection saved! Keep growing! 🌱")
 
-# Visualize Progress
-if tasks_completed > 0 or reflections_written > 0:
-    progress_data = pd.DataFrame({
-        "Category": ["Tasks Completed", "Reflections Written"],
-        "Count": [tasks_completed, reflections_written]
-    })
-    fig = px.bar(progress_data, x="Category", y="Count", title="Your Progress")
-    st.plotly_chart(fig)
+    st.header("🙏 Gratitude Journal")
+    gratitude_entry = st.text_area("What are you grateful for today?")
+    if st.button("Submit Gratitude Entry"):
+        st.success("Gratitude entry saved! Practicing gratitude boosts positivity! 🌟")
 
-# Learning Goals
-st.subheader("🎯 Learning Goals")
-goal = st.text_input("Set a learning goal (e.g., 'Learn how to clean data effectively'):")
-if st.button("Add Goal"):
-    if goal:
-        st.session_state.goals.append(goal)
-        st.success(f"Goal added: {goal}")
-    else:
-        st.warning("Please enter a goal before adding.")
+    st.header("📚 Resources for Growth")
+    st.write("Here are some resources to help you on your growth journey:")
+    st.write("- Books: 'Mindset' by Carol Dweck, 'Atomic Habits' by James Clear")
+    st.write("- Podcasts: 'The Growth Mindset Podcast', 'The Tim Ferriss Show'")
+    st.write("- Videos: TED Talks on growth mindset and personal development")
+    st.write("- Courses: Online courses on Coursera, Udemy, or LinkedIn Learning")
 
-# Display saved goals
-if st.session_state.goals:
-    st.subheader("🎯 Saved Goals")
-    for i, goal in enumerate(st.session_state.goals, 1):
-        st.write(f"{i}. {goal}")
+    st.header("🤝 Join the Community")
+    st.write("Connect with like-minded individuals and share your growth journey!")
+    st.write("- Forums: Reddit communities like r/GetMotivated, r/PersonalDevelopment")
+    st.write("- Social Media: Follow hashtags like #GrowthMindset, #PersonalGrowth")
+    st.write("- Local Meetups: Join local groups focused on self-improvement and growth")
 
-# Data Learning Tools
-st.subheader("📚 Data Learning Tools")
-st.write("Use the tools below to learn data skills and apply a growth mindset to your work.")
+    st.write("---")
+    st.write("Built with ❤ by Areesha Abdul Sattar | Stay motivated and keep growing! 🌱")
+    st.write("📧 Contact: areesha21314@gmail.com")
 
-# File uploader widget
-uploaded_files = st.file_uploader("📂 Upload your files (CSV or Excel):", type=["csv", "xlsx"], accept_multiple_files=True)
+# Data Sweeper App
+def data_sweeper_app():
+    st.title("📊 Data Sweeper")
+    st.write("✨ Transform your files between CSV and Excel formats with built-in data cleaning and visualization  📈")
 
-# Processing logic for uploaded files
-if uploaded_files:
-    for file in uploaded_files:
-        file_extension = os.path.splitext(file.name)[-1].lower()
-        
-        try:
-            if file_extension == ".csv":
+    uploaded_files = st.file_uploader("📂 Upload your files (CSV or Excel):", type=["csv", "xlsx"], accept_multiple_files=True)
+
+    if uploaded_files:
+        for file in uploaded_files:
+            file_ext = os.path.splitext(file.name)[-1].lower()
+
+            if file_ext == ".csv":
                 df = pd.read_csv(file)
-            elif file_extension == ".xlsx":
+            elif file_ext == ".xlsx":
                 df = pd.read_excel(file)
             else:
-                st.error(f"Unsupported file type: {file_extension}")
-                continue
-            
-            st.write(f"**📄 File Name:** {file.name}")
-            st.write(f"**📏 File Size:** {file.size / 1024:.2f} KB")
+                st.error(f"❌ Unsupported file type: {file_ext}")
+                continue  
 
-            st.write("🔍 Preview of the Uploaded File:")
+            st.write(f"📄 File Name: {file.name}")
+            st.write(f"📏 File Size: {file.size / 1024:.2f} KB")
+
+            st.write("👀 Preview the Head of the Dataframe")
             st.dataframe(df.head())
 
-            # Data cleaning options
-            with st.expander("🛠️ Data Cleaning Options"):
-                if st.checkbox(f"Clean Data for {file.name}"):
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        if st.button(f"🧹 Remove Duplicates from {file.name}"):
-                            df.drop_duplicates(inplace=True)
-                            st.write("Duplicates Removed!")
-                        if st.button(f"🗑️ Drop Columns from {file.name}"):
-                            columns_to_drop = st.multiselect("Select columns to drop", df.columns)
-                            df.drop(columns=columns_to_drop, inplace=True)
-                            st.write(f"Dropped columns: {columns_to_drop}")
-                    with col2:
-                        if st.button(f"🔢 Fill Missing Values for {file.name}"):
-                            numeric_cols = df.select_dtypes(include=['number']).columns
-                            cols_to_fill = st.multiselect("Select numeric columns to fill", numeric_cols)
-                            if cols_to_fill:
-                                df[cols_to_fill] = df[cols_to_fill].fillna(df[cols_to_fill].mean())
-                                st.write(f"Missing values filled for: {cols_to_fill}")
-                        if st.button(f"🔤 Handle Categorical Data for {file.name}"):
-                            categorical_cols = df.select_dtypes(include=['object']).columns
-                            df[categorical_cols] = df[categorical_cols].fillna("Unknown")
-                            st.write("Categorical Data Handled!")
+            st.subheader("🧹 Data Cleaning Options")
+            if st.checkbox(f"🧽 Clean Data for {file.name}"):
+                col1, col2 = st.columns(2)
 
-            # Column selection for conversion
-            st.subheader("🎯 Select Columns to Convert")
-            columns = st.multiselect(f"Choose Columns for {file.name}", df.columns, default=df.columns)
+                with col1:
+                    if st.button(f"🚫 Remove Duplicates from {file.name}"):
+                        df.drop_duplicates(inplace=True)
+                        st.write("✅ Duplicates Removed!")
+
+                with col2:
+                    if st.button(f"🪣 Fill Missing Values for {file.name}"):
+                        numeric_cols = df.select_dtypes(include=["number"]).columns
+                        df[numeric_cols] = df[numeric_cols].fillna(df[numeric_cols].mean())
+                        st.write("✅ Missing Values have been Filled!")
+              
+            st.subheader("🔍 Select Columns to Convert")
+            columns = st.multiselect(f"📌 Choose Columns for {file.name}", df.columns, default=df.columns)
             df = df[columns]
 
-            # Data visualization
             st.subheader("📊 Data Visualization")
-            if st.checkbox(f"Show Visualization for {file.name}"):
-                numeric_cols = df.select_dtypes(include='number').columns
-                if visualization_type == "Pie Chart":
-                    st.write("**Pie Chart requires one categorical and one numeric column.**")
-                    name_col = st.selectbox("Select column for names", df.columns)
-                    value_col = st.selectbox("Select column for values", numeric_cols)
-                    if name_col and value_col:
-                        fig = px.pie(df, names=name_col, values=value_col, title="Pie Chart")
-                        st.plotly_chart(fig)
-                elif visualization_type == "Heatmap":
-                    if len(numeric_cols) >= 2:
-                        corr = df[numeric_cols].corr()
-                        fig = px.imshow(corr, text_auto=True, title="Heatmap")
-                        st.plotly_chart(fig)
-                    else:
-                        st.warning("At least two numeric columns are required for a heatmap.")
-                elif visualization_type in ["Bar Chart", "Line Chart", "Scatter Plot", "Histogram", "Box Plot"]:
-                    if len(numeric_cols) >= 2:
-                        if visualization_type == "Bar Chart":
-                            x_axis = st.selectbox("Select X-axis", df.columns)
-                            y_axis = st.selectbox("Select Y-axis", numeric_cols)
-                            fig = px.bar(df, x=x_axis, y=y_axis, title="Bar Chart")
-                        elif visualization_type == "Line Chart":
-                            x_axis = st.selectbox("Select X-axis", df.columns)
-                            y_axis = st.selectbox("Select Y-axis", numeric_cols)
-                            fig = px.line(df, x=x_axis, y=y_axis, title="Line Chart")
-                        elif visualization_type == "Scatter Plot":
-                            x_axis = st.selectbox("Select X-axis", numeric_cols)
-                            y_axis = st.selectbox("Select Y-axis", numeric_cols)
-                            fig = px.scatter(df, x=x_axis, y=y_axis, title="Scatter Plot")
-                        elif visualization_type == "Histogram":
-                            x_axis = st.selectbox("Select X-axis", numeric_cols)
-                            fig = px.histogram(df, x=x_axis, title="Histogram")
-                        elif visualization_type == "Box Plot":
-                            fig = px.box(df, y=numeric_cols, title="Box Plot")
-                        st.plotly_chart(fig)
-                    else:
-                        st.warning("At least two numeric columns are required for this visualization.")
+            if st.checkbox(f"📈 Show visualization for {file.name}"):
+                numeric_data = df.select_dtypes(include="number")
+                st.write("📊 Numeric Data Preview:", numeric_data)
 
-            # Additional options
-            if show_summary:
-                st.subheader("📝 Data Summary")
-                st.write(df.describe())
-
-            if show_correlation:
-                st.subheader("📈 Correlation Matrix")
-                numeric_df = df.select_dtypes(include=['number'])
-                if not numeric_df.empty:
-                    corr = numeric_df.corr()
-                    fig = px.imshow(corr, text_auto=True, title="Correlation Matrix")
-                    st.plotly_chart(fig)
+                if not numeric_data.empty and numeric_data.shape[1] >= 1:
+                    st.bar_chart(numeric_data)
                 else:
-                    st.warning("No numeric columns available for correlation matrix.")
+                    st.warning(f"⚠ No numeric columns found in {file.name} for visualization!")
 
-            if show_missing_values:
-                st.subheader("🔍 Missing Values Analysis")
-                missing_values = df.isnull().sum()
-                st.write(missing_values)
-
-            if show_outliers:
-                st.subheader("📊 Outliers Analysis")
-                numeric_df = df.select_dtypes(include=['number'])
-                if not numeric_df.empty:
-                    fig = px.box(numeric_df, title="Outliers Analysis")
-                    st.plotly_chart(fig)
-                else:
-                    st.warning("No numeric columns available for outliers analysis.")
-
-            # File conversion options
             st.subheader("🔄 Conversion Options")
-            conversion_type = st.radio(f"Convert {file.name} to:", ["CSV", "Excel", "JSON"], key=file.name)
-            if st.button(f"Convert {file.name}"):
+            conversion_type = st.radio(f"🔧 Convert {file.name} to:", ["CSV", "Excel"], key=file.name)
+            if st.button(f"🔃 Convert {file.name}"):
                 buffer = BytesIO()
                 if conversion_type == "CSV":
                     df.to_csv(buffer, index=False)
-                    file_name = file.name.replace(file_extension, ".csv")
+                    file_name = file.name.replace(file_ext, ".csv")
                     mime_type = "text/csv"
                 elif conversion_type == "Excel":
-                    df.to_excel(buffer, index=False, engine='openpyxl')
-                    file_name = file.name.replace(file_extension, ".xlsx")
+                    df.to_excel(buffer, index=False)
+                    file_name = file.name.replace(file_ext, ".xlsx")
                     mime_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                elif conversion_type == "JSON":
-                    json_format = st.selectbox("Select JSON format", ["records", "split", "index", "columns", "values"])
-                    df.to_json(buffer, orient=json_format)
-                    file_name = file.name.replace(file_extension, ".json")
-                    mime_type = "application/json"
+
                 buffer.seek(0)
-                
                 st.download_button(
-                    label=f"⬇️ Download {file.name} as {conversion_type}",
+                    label=f"⬇ Download {file.name} as {conversion_type}",
                     data=buffer,
                     file_name=file_name,
                     mime=mime_type
                 )
 
-        except Exception as e:
-            st.error(f"Error processing file {file.name}: {e}")
+    st.success("🎉 All files processed!")
 
-st.success("🎉 All files processed successfully!")
-st.markdown("</div>", unsafe_allow_html=True)
+# Quizzes App
+def quizzes_app():
+    st.title("🧠 Quizzes")
+    st.write("Test your knowledge and learn something new!")
+
+    if 'quizzes' not in st.session_state:
+        st.session_state.quizzes = {
+            "General": [
+                {
+                    "question": "What is the capital of France? 🇫🇷",
+                    "options": ["Paris", "London", "Berlin", "Madrid"],
+                    "answer": "Paris"
+                },
+                {
+                    "question": "Which planet is known as the Red Planet? 🪐",
+                    "options": ["Earth", "Mars", "Jupiter", "Saturn"],
+                    "answer": "Mars"
+                },
+                {
+                    "question": "Who wrote 'To Kill a Mockingbird'? 📚",
+                    "options": ["Harper Lee", "Mark Twain", "J.K. Rowling", "Stephen King"],
+                    "answer": "Harper Lee"
+                }
+            ],
+            "Software Engineer": [
+                {
+                    "question": "What does HTML stand for? 🌐",
+                    "options": ["Hyper Text Markup Language", "High-Level Text Machine Language", "Hyperlink and Text Markup Language", "Home Tool Markup Language"],
+                    "answer": "Hyper Text Markup Language"
+                },
+                {
+                    "question": "Which language is used for Android development? 📱",
+                    "options": ["Java", "Python", "Swift", "C#"],
+                    "answer": "Java"
+                },
+                {
+                    "question": "What is the main use of Docker? 🐳",
+                    "options": ["Virtualization", "Containerization", "Networking", "Data Storage"],
+                    "answer": "Containerization"
+                }
+            ],
+            "Doctor": [
+                {
+                    "question": "What is the largest organ in the human body? 🩺",
+                    "options": ["Heart", "Skin", "Liver", "Brain"],
+                    "answer": "Skin"
+                },
+                {
+                    "question": "Which vitamin is produced by the human body when exposed to sunlight? ☀",
+                    "options": ["Vitamin A", "Vitamin C", "Vitamin D", "Vitamin E"],
+                    "answer": "Vitamin D"
+                },
+                {
+                    "question": "What is the normal resting heart rate for adults? 💓",
+                    "options": ["60-100 bpm", "40-60 bpm", "100-120 bpm", "120-140 bpm"],
+                    "answer": "60-100 bpm"
+                }
+            ]
+        }
+
+    if 'current_quiz' not in st.session_state:
+        st.session_state.current_quiz = 0
+
+    quiz_category = "General"
+    quizzes = st.session_state.quizzes[quiz_category]
+
+    if st.session_state.current_quiz < len(quizzes):
+        quiz = quizzes[st.session_state.current_quiz]
+        st.subheader(f"Question {st.session_state.current_quiz + 1}")
+        st.write(quiz["question"])
+        user_answer = st.radio("Options", quiz["options"])
+        if st.button("Submit Answer"):
+            if user_answer == quiz["answer"]:
+                st.success("Correct! 🎉")
+            else:
+                st.error(f"Wrong! The correct answer is {quiz['answer']}.")
+            st.session_state.current_quiz += 1
+    else:
+        st.success("You have completed all the quizzes! 🎉")
+        if st.button("Restart Quizzes"):
+            st.session_state.current_quiz = 0
+
+# Profile App
+def profile_app():
+    st.title("👤 Profile")
+    st.write("Update your profile information.")
+
+    if 'name' not in st.session_state:
+        st.session_state.name = ""
+    if 'email' not in st.session_state:
+        st.session_state.email = ""
+    if 'profile_image' not in st.session_state:
+        st.session_state.profile_image = None
+
+    name = st.text_input("Name", st.session_state.name)
+    email = st.text_input("Email", st.session_state.email)
+    profile_image = st.file_uploader("Upload Profile Image", type=["jpg", "jpeg", "png"])
+
+    if st.button("Update Profile"):
+        st.session_state.name = name
+        st.session_state.email = email
+        if profile_image is not None:
+            st.session_state.profile_image = profile_image
+        st.success("Profile updated successfully! 🎉")
+
+    if st.session_state.profile_image is not None:
+        st.image(st.session_state.profile_image, caption="Your Profile Image", width=150)
+
+# Settings App
+def settings_app():
+    st.title("⚙ Settings")
+    st.write("Customize your app settings.")
+
+    theme = st.selectbox("Theme", ["Light", "Dark"])
+    notifications = st.checkbox("Enable Notifications", True)
+
+    if st.button("Save Settings"):
+        if theme == "Light":
+            st.set_page_config(page_title="Growth Mindset App", page_icon="🌱", layout="centered", initial_sidebar_state="expanded")
+        elif theme == "Dark":
+            st.set_page_config(page_title="Growth Mindset App", page_icon="🌱", layout="centered", initial_sidebar_state="expanded", theme="dark")
+        st.success("Settings saved successfully! 🎉")
+
+# Chatbot App
+def chatbot_app():
+    st.title("🤖 Chatbot")
+    st.write("Chat with our AI-powered chatbot in real-time!")
+
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = []
+
+    user_input = st.chat_input("You: ")
+
+    if user_input:
+        st.session_state.chat_history.append({"role": "user", "content": user_input})
+        with st.chat_message("user"):
+            st.markdown(f"*You:* {user_input}")
+
+        with st.spinner("Thinking..."):
+            bot_response = chat_with_gemini(user_input)
+
+        st.session_state.chat_history.append({"role": "assistant", "content": bot_response})
+        with st.chat_message("assistant"):
+            st.markdown(f"*Assistant:* {bot_response}")
+
+    if st.session_state.chat_history:
+        st.subheader("Chat History:")
+        for message in st.session_state.chat_history:
+            with st.chat_message(message["role"]):
+                st.markdown(f"{message['role'].capitalize()}:** {message['content']}")
+
+# Dashboard App
+def dashboard_app():
+    st.title("📊 Dashboard")
+    st.write("Track your progress and activity!")
+
+    if 'tasks' in st.session_state:
+        completed_tasks = sum(1 for task in st.session_state.tasks if task['completed'])
+        total_tasks = len(st.session_state.tasks)
+        st.write(f"✅ Completed Tasks: {completed_tasks}/{total_tasks}")
+
+    if 'quizzes' in st.session_state:
+        st.write(f"🧠 Quizzes Taken: {st.session_state.current_quiz}")
+
+    if 'files_processed' not in st.session_state:
+        st.session_state.files_processed = 0
+    st.write(f"📂 Files Processed: {st.session_state.files_processed}")
+
+    st.subheader("📈 Activity Over Time")
+    activity_data = pd.DataFrame({
+        "Date": [datetime.date.today() - datetime.timedelta(days=i) for i in range(7)],
+        "Tasks Completed": [random.randint(1, 5) for _ in range(7)],
+        "Quizzes Taken": [random.randint(1, 3) for _ in range(7)]
+    })
+    st.line_chart(activity_data.set_index("Date"))
+
+# Pomodoro Timer App
+def pomodoro_timer_app():
+    st.title("⏳ Pomodoro Timer")
+    st.write("Stay focused and productive with the Pomodoro technique!")
+
+    work_time = st.number_input("Work Time (minutes):", min_value=1, value=25)
+    break_time = st.number_input("Break Time (minutes):", min_value=1, value=5)
+
+    if st.button("Start Timer"):
+        with st.empty():
+            for _ in range(work_time * 60):
+                st.write(f"⏳ Working... {work_time}:{_ % 60:02}")
+                time.sleep(1)
+            st.success("Time for a break! 🎉")
+            for _ in range(break_time * 60):
+                st.write(f"☕ Break Time... {break_time}:{_ % 60:02}")
+                time.sleep(1)
+            st.success("Break over! Back to work! 💪")
+
+# Habit Tracker App
+def habit_tracker_app():
+    st.title("📅 Habit Tracker")
+    st.write("Track your daily habits and build a better routine!")
+
+    if 'habits' not in st.session_state:
+        st.session_state.habits = {}
+
+    habit = st.text_input("Add a new habit:")
+    if st.button("Add Habit"):
+        if habit:
+            st.session_state.habits[habit] = []
+            st.success(f"Habit '{habit}' added!")
+
+    for habit, dates in st.session_state.habits.items():
+        st.subheader(habit)
+        if st.checkbox(f"Mark {habit} as completed today"):
+            if datetime.date.today() not in dates:
+                dates.append(datetime.date.today())
+                st.success(f"{habit} marked as completed for today! 🎉")
+        st.write(f"Completed on: {', '.join(map(str, dates))}")
+
+# Daily Journal App
+def daily_journal_app():
+    st.title("📔 Daily Journal")
+    st.write("Write about your day and reflect on your thoughts.")
+
+    journal_entry = st.text_area("Write your journal entry here:")
+    if st.button("Save Entry"):
+        if 'journal_entries' not in st.session_state:
+            st.session_state.journal_entries = []
+        st.session_state.journal_entries.append({
+            "date": datetime.date.today(),
+            "entry": journal_entry
+        })
+        st.success("Journal entry saved! 🎉")
+
+    if 'journal_entries' in st.session_state:
+        st.subheader("Past Entries")
+        for entry in st.session_state.journal_entries:
+            st.write(f"📅 {entry['date']}: {entry['entry']}")
+
+# Goal Tracker App
+def goal_tracker_app():
+    st.title("🎯 Goal Tracker")
+    st.write("Set and track your long-term goals!")
+
+    if 'goals' not in st.session_state:
+        st.session_state.goals = []
+
+    goal = st.text_input("Add a new goal:")
+    deadline = st.date_input("Deadline:", datetime.date.today())
+    if st.button("Add Goal"):
+        if goal:
+            st.session_state.goals.append({
+                "goal": goal,
+                "deadline": deadline,
+                "completed": False
+            })
+            st.success(f"Goal '{goal}' added!")
+
+    for i, goal in enumerate(st.session_state.goals, 1):
+        st.write(f"{i}. {goal['goal']} - Deadline: {goal['deadline']}")
+        if st.button(f"Mark as Completed {i}"):
+            st.session_state.goals[i-1]['completed'] = True
+            st.success(f"Goal '{goal['goal']}' marked as completed! 🎉")
+
+# Random Fact Generator App
+def random_fact_generator_app():
+    st.title("🤔 Random Fact Generator")
+    st.write("Learn something new every day!")
+
+    if st.button("Generate a Random Fact"):
+        facts = [
+            "Honey never spoils. Archaeologists have found pots of honey in ancient Egyptian tombs that are over 3,000 years old and still edible!",
+            "Octopuses have three hearts. Two pump blood to the gills, and one pumps it to the rest of the body.",
+            "Bananas are berries, but strawberries aren't."
+        ]
+        st.info(random.choice(facts))
+
+# Feedback Form App
+def feedback_form_app():
+    st.title("📝 Feedback Form")
+    st.write("We'd love to hear your feedback!")
+
+    feedback = st.text_area("Share your thoughts:")
+    rating = st.slider("Rate your experience (1-5):", 1, 5, 3)
+    if st.button("Submit Feedback"):
+        st.success("Thank you for your feedback! 🎉")
+
+# Main Function
+def main():
+    st.set_page_config(
+        page_title="Growth Mindset App",
+        page_icon="🌱",
+        layout="centered",
+        initial_sidebar_state="expanded"
+    )
+
+    # Sidebar for Name and Email
+    st.sidebar.title("🌱 Navigation")
+    if 'name' not in st.session_state or st.session_state.name == "":
+        st.session_state.name = st.sidebar.text_input("Enter your name:")
+        st.session_state.email = st.sidebar.text_input("Enter your email:")
+        if st.sidebar.button("Submit"):
+            if st.session_state.name and st.session_state.email:
+                st.sidebar.success(f"Welcome, {st.session_state.name}!")
+            else:
+                st.sidebar.warning("Please enter both name and email.")
+        else:
+            return
+
+    # Navigation Options
+    app_choice = st.sidebar.radio(
+        "Choose an App:", 
+        ["Data Sweeper", "Task Manager", "Chatbot", "Growth Mindset Challenge", "Quizzes", "Profile", "Settings", "Dashboard", "Pomodoro Timer", "Habit Tracker", "Daily Journal", "Goal Tracker", "Random Fact Generator", "Feedback Form"]
+    )
+
+    if app_choice == "Data Sweeper":
+        data_sweeper_app()
+    elif app_choice == "Task Manager":
+        task_manager_app()
+    elif app_choice == "Chatbot":
+        chatbot_app()
+    elif app_choice == "Growth Mindset Challenge":
+        growth_mindset_app()
+    elif app_choice == "Quizzes":
+        quizzes_app()
+    elif app_choice == "Profile":
+        profile_app()
+    elif app_choice == "Settings":
+        settings_app()
+    elif app_choice == "Dashboard":
+        dashboard_app()
+    elif app_choice == "Pomodoro Timer":
+        pomodoro_timer_app()
+    elif app_choice == "Habit Tracker":
+        habit_tracker_app()
+    elif app_choice == "Daily Journal":
+        daily_journal_app()
+    elif app_choice == "Goal Tracker":
+        goal_tracker_app()
+    elif app_choice == "Random Fact Generator":
+        random_fact_generator_app()
+    elif app_choice == "Feedback Form":
+        feedback_form_app()
+
+if __name__ == "__main__":
+    main()
