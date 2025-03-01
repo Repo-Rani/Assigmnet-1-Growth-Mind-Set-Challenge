@@ -1,22 +1,85 @@
 import streamlit as st
 import google.generativeai as genai
-from dotenv import load_dotenv, find_dotenv
-import os
 import datetime
 import random
 import pandas as pd
 from io import BytesIO
 import time
+import re  # For email validation
 
+# Set page config at the top of the script
+st.set_page_config(
+    page_title="Growth Mindset App",
+    page_icon="🌱",
+    layout="centered",
+    initial_sidebar_state="expanded"
+)
 
-# Configure
-genai.configure(api_key="AIzaSyCCluJNc2QylAYOrEr4JyGmlhE9CaS1lgk")
-model = genai.GenerativeModel("gemini-pro")
+# Configure Gemini AI
+try:
+    genai.configure(api_key="AIzaSyCoBUPWub-DInlZcKyUOfCSgxvDHpyu3F4") 
+    model = genai.GenerativeModel("gemini-2.0-flash")
+except Exception as e:
+    print(f"Error configuring Gemini AI: {str(e)}")
 
-# Function to chat 
+# Function to chat with Gemini
 def chat_with_gemini(prompt):
-    response = model.generate_content(prompt)
-    return response.text
+    try:
+        response = model.generate_content(prompt)
+        return response.text
+    except Exception as e:
+        return f"Error: {str(e)}"
+
+# Function to validate email
+def validate_email(email):
+    # Regex pattern for a valid email
+    pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+    return re.match(pattern, email) is not None
+
+# Light Theme and Text Color Adjustments
+st.markdown("""
+    <style>
+    /* Main background and text color */
+    .main {
+        background-color: #FFFFFF;  /* Light background */
+        color: #333333;  /* Dark grey text */
+        padding: 20px;
+        border-radius: 10px;
+    }
+    /* Headings color */
+    h1, h2, h3 {
+        color: #1565C0;  /* Blue for headings */
+    }
+    /* Button styling */
+    .stButton>button {
+        background-color: #FF0000;  /* Red button */
+        color: white;  /* White text */
+        border-radius: 10px;  /* Rounded corners */
+        padding: 12px 24px;  /* Larger padding */
+        border: none;  /* No border */
+        font-size: 16px;  /* Larger font size */
+        font-weight: bold;  /* Bold text */
+        transition: background-color 0.3s ease, color 0.3s ease;  /* Smooth hover effect */
+    }
+    /* Button hover effect */
+    .stButton>button:hover {
+        background-color: white;  /* White background on hover */
+        color: #FF0000;  /* Red text on hover */
+    }
+    /* Sidebar styling */
+    .sidebar .sidebar-content {
+        background-color: #F5F5F5;  /* Light grey sidebar */
+        color: #333333;  /* Dark grey text */
+    }
+    /* Footer styling */
+    .footer {
+        text-align: center;
+        padding: 10px;
+        font-size: 0.9em;
+        color: #666666;  /* Grey text */
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
 # Motivational Quotes Function
 def get_motivation():
@@ -304,7 +367,7 @@ def quizzes_app():
         if st.button("Restart Quizzes"):
             st.session_state.current_quiz = 0
 
-# Profile App
+# Profile App with Proper Email Validation
 def profile_app():
     st.title("👤 Profile")
     st.write("Update your profile information.")
@@ -321,11 +384,18 @@ def profile_app():
     profile_image = st.file_uploader("Upload Profile Image", type=["jpg", "jpeg", "png"])
 
     if st.button("Update Profile"):
-        st.session_state.name = name
-        st.session_state.email = email
-        if profile_image is not None:
-            st.session_state.profile_image = profile_image
-        st.success("Profile updated successfully! 🎉")
+        if not name:
+            st.warning("Please enter your name.")
+        elif not email:
+            st.warning("Please enter your email.")
+        elif not validate_email(email):  # Validate email format
+            st.warning("Please enter a valid email address (e.g., example@domain.com).")
+        else:
+            st.session_state.name = name
+            st.session_state.email = email
+            if profile_image is not None:
+                st.session_state.profile_image = profile_image
+            st.success("Profile updated successfully! 🎉")
 
     if st.session_state.profile_image is not None:
         st.image(st.session_state.profile_image, caption="Your Profile Image", width=150)
@@ -335,14 +405,10 @@ def settings_app():
     st.title("⚙ Settings")
     st.write("Customize your app settings.")
 
-    theme = st.selectbox("Theme", ["Light", "Dark"])
+    theme = st.selectbox("Theme", ["Light"])
     notifications = st.checkbox("Enable Notifications", True)
 
     if st.button("Save Settings"):
-        if theme == "Light":
-            st.set_page_config(page_title="Growth Mindset App", page_icon="🌱", layout="centered", initial_sidebar_state="expanded")
-        elif theme == "Dark":
-            st.set_page_config(page_title="Growth Mindset App", page_icon="🌱", layout="centered", initial_sidebar_state="expanded", theme="dark")
         st.success("Settings saved successfully! 🎉")
 
 # Chatbot App
@@ -509,59 +575,71 @@ def feedback_form_app():
 
 # Main Function
 def main():
-    st.set_page_config(
-        page_title="Growth Mindset App",
-        page_icon="🌱",
-        layout="centered",
-        initial_sidebar_state="expanded"
-    )
-
     # Sidebar for Name and Email
     st.sidebar.title("🌱 Navigation")
     if 'name' not in st.session_state or st.session_state.name == "":
         st.session_state.name = st.sidebar.text_input("Enter your name:")
         st.session_state.email = st.sidebar.text_input("Enter your email:")
         if st.sidebar.button("Submit"):
-            if st.session_state.name and st.session_state.email:
-                st.sidebar.success(f"Welcome, {st.session_state.name}!")
+            if not st.session_state.name:
+                st.sidebar.warning("Please enter your name.")
+            elif not st.session_state.email:
+                st.sidebar.warning("Please enter your email.")
+            elif not validate_email(st.session_state.email):  # Validate email format
+                st.sidebar.warning("Please enter a valid email address (e.g., example@domain.com).")
             else:
-                st.sidebar.warning("Please enter both name and email.")
+                st.sidebar.success(f"Welcome, {st.session_state.name}!")
         else:
             return
 
-    # Navigation Options
+    # Navigation Options with Emojis
     app_choice = st.sidebar.radio(
         "Choose an App:", 
-        ["Data Sweeper", "Task Manager", "Chatbot", "Growth Mindset Challenge", "Quizzes", "Profile", "Settings", "Dashboard", "Pomodoro Timer", "Habit Tracker", "Daily Journal", "Goal Tracker", "Random Fact Generator", "Feedback Form"]
+        [
+            "📊 Data Sweeper", 
+            "✅ Task Manager", 
+            "🤖 Chatbot", 
+            "🌱 Growth Mindset Challenge", 
+            "🧠 Quizzes", 
+            "👤 Profile", 
+            "⚙ Settings", 
+            "📊 Dashboard", 
+            "⏳ Pomodoro Timer", 
+            "📅 Habit Tracker", 
+            "📔 Daily Journal", 
+            "🎯 Goal Tracker", 
+            "🤔 Random Fact Generator", 
+            "📝 Feedback Form"
+        ]
     )
 
-    if app_choice == "Data Sweeper":
+    if app_choice == "📊 Data Sweeper":
         data_sweeper_app()
-    elif app_choice == "Task Manager":
+    elif app_choice == "✅ Task Manager":
         task_manager_app()
-    elif app_choice == "Chatbot":
+    elif app_choice == "🤖 Chatbot":
         chatbot_app()
-    elif app_choice == "Growth Mindset Challenge":
+    elif app_choice == "🌱 Growth Mindset Challenge":
         growth_mindset_app()
-    elif app_choice == "Quizzes":
+    elif app_choice == "🧠 Quizzes":
         quizzes_app()
-    elif app_choice == "Profile":
+    elif app_choice == "👤 Profile":
         profile_app()
-    elif app_choice == "Settings":
+    elif app_choice == "⚙ Settings":
         settings_app()
-    elif app_choice == "Dashboard":
+    elif app_choice == "📊 Dashboard":
         dashboard_app()
-    elif app_choice == "Pomodoro Timer":
+    elif app_choice == "⏳ Pomodoro Timer":
         pomodoro_timer_app()
-    elif app_choice == "Habit Tracker":
+    elif app_choice == "📅 Habit Tracker":
         habit_tracker_app()
-    elif app_choice == "Daily Journal":
+    elif app_choice == "📔 Daily Journal":
         daily_journal_app()
-    elif app_choice == "Goal Tracker":
+    elif app_choice == "🎯 Goal Tracker":
         goal_tracker_app()
-    elif app_choice == "Random Fact Generator":
+    elif app_choice == "🤔 Random Fact Generator":
         random_fact_generator_app()
-    elif app_choice == "Feedback Form":
+    elif app_choice == "📝 Feedback Form":
         feedback_form_app()
 
 if __name__ == "__main__":
