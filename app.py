@@ -5,7 +5,8 @@ import random
 import pandas as pd
 from io import BytesIO
 import time
-import re  # For email validation
+import re  
+import os
 
 # Set page config at the top of the script
 st.set_page_config(
