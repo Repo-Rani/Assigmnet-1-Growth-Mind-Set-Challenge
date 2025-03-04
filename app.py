@@ -7,6 +7,8 @@ from io import BytesIO
 import time
 import re  
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 # Set page config at the top of the script
 st.set_page_config(
@@ -18,7 +20,7 @@ st.set_page_config(
 
 # Configure Gemini AI
 try:
-    genai.configure(api_key="AIzaSyCoBUPWub-DInlZcKyUOfCSgxvDHpyu3F4") 
+    genai.configure(api_key=os.getenv("GOOGLE_API_KEY")) 
     model = genai.GenerativeModel("gemini-2.0-flash")
 except Exception as e:
     print(f"Error configuring Gemini AI: {str(e)}")
@@ -576,24 +578,8 @@ def feedback_form_app():
 
 # Main Function
 def main():
-    # Sidebar for Name and Email
+    # Sidebar for Navigation
     st.sidebar.title("🌱 Navigation")
-    if 'name' not in st.session_state or st.session_state.name == "":
-        st.session_state.name = st.sidebar.text_input("Enter your name:")
-        st.session_state.email = st.sidebar.text_input("Enter your email:")
-        if st.sidebar.button("Submit"):
-            if not st.session_state.name:
-                st.sidebar.warning("Please enter your name.")
-            elif not st.session_state.email:
-                st.sidebar.warning("Please enter your email.")
-            elif not validate_email(st.session_state.email):  # Validate email format
-                st.sidebar.warning("Please enter a valid email address (e.g., example@domain.com).")
-            else:
-                st.sidebar.success(f"Welcome, {st.session_state.name}!")
-        else:
-            return
-
-    # Navigation Options with Emojis
     app_choice = st.sidebar.radio(
         "Choose an App:", 
         [
@@ -614,34 +600,56 @@ def main():
         ]
     )
 
-    if app_choice == "📊 Data Sweeper":
-        data_sweeper_app()
-    elif app_choice == "✅ Task Manager":
-        task_manager_app()
-    elif app_choice == "🤖 Chatbot":
-        chatbot_app()
-    elif app_choice == "🌱 Growth Mindset Challenge":
-        growth_mindset_app()
-    elif app_choice == "🧠 Quizzes":
-        quizzes_app()
-    elif app_choice == "👤 Profile":
-        profile_app()
-    elif app_choice == "⚙ Settings":
-        settings_app()
-    elif app_choice == "📊 Dashboard":
-        dashboard_app()
-    elif app_choice == "⏳ Pomodoro Timer":
-        pomodoro_timer_app()
-    elif app_choice == "📅 Habit Tracker":
-        habit_tracker_app()
-    elif app_choice == "📔 Daily Journal":
-        daily_journal_app()
-    elif app_choice == "🎯 Goal Tracker":
-        goal_tracker_app()
-    elif app_choice == "🤔 Random Fact Generator":
-        random_fact_generator_app()
-    elif app_choice == "📝 Feedback Form":
-        feedback_form_app()
+    # Display Welcome Message if no app is selected
+    if app_choice is None:
+        st.title("🌟 Welcome to the Growth Mindset App! 🌟")
+        st.write("""
+            **🚀 Get ready to embark on a journey of self-improvement and productivity!**
+
+            This app is designed to help you:
+            - **Organize your tasks** with the Task Manager.
+            - **Reflect and grow** with the Growth Mindset Challenge.
+            - **Test your knowledge** with interactive quizzes.
+            - **Stay focused** with the Pomodoro Timer.
+            - **Track your habits** and build a better routine.
+            - **Set and achieve your goals** with the Goal Tracker.
+            - **Chat with an AI-powered chatbot** for real-time assistance.
+            - **Clean and visualize your data** with the Data Sweeper.
+            - **And much more!**
+
+            **👉 Select an app from the sidebar to get started!**
+        """)
+        st.image("https://via.placeholder.com/800x400.png?text=Welcome+UI+Placeholder", use_column_width=True)
+    else:
+        # Display the selected app
+        if app_choice == "📊 Data Sweeper":
+            data_sweeper_app()
+        elif app_choice == "✅ Task Manager":
+            task_manager_app()
+        elif app_choice == "🤖 Chatbot":
+            chatbot_app()
+        elif app_choice == "🌱 Growth Mindset Challenge":
+            growth_mindset_app()
+        elif app_choice == "🧠 Quizzes":
+            quizzes_app()
+        elif app_choice == "👤 Profile":
+            profile_app()
+        elif app_choice == "⚙ Settings":
+            settings_app()
+        elif app_choice == "📊 Dashboard":
+            dashboard_app()
+        elif app_choice == "⏳ Pomodoro Timer":
+            pomodoro_timer_app()
+        elif app_choice == "📅 Habit Tracker":
+            habit_tracker_app()
+        elif app_choice == "📔 Daily Journal":
+            daily_journal_app()
+        elif app_choice == "🎯 Goal Tracker":
+            goal_tracker_app()
+        elif app_choice == "🤔 Random Fact Generator":
+            random_fact_generator_app()
+        elif app_choice == "📝 Feedback Form":
+            feedback_form_app()
 
 if __name__ == "__main__":
     main()
