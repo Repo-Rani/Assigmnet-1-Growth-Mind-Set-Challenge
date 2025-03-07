@@ -208,8 +208,8 @@ def growth_mindset_app():
     st.write("- Local Meetups: Join local groups focused on self-improvement and growth")
 
     st.write("---")
-    st.write("Built with ❤ by Areesha Abdul Sattar | Stay motivated and keep growing! 🌱")
-    st.write("📧 Contact: areesha21314@gmail.com")
+    st.write("Built with ❤ by Rani Abdul Sattar | Stay motivated and keep growing! 🌱")
+    st.write("📧 Contact: ranimiss968@gmail.com")
 
 # Data Sweeper App
 def data_sweeper_app():
